@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario PRO | Supermercado/Pulpería</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+    <div class="dashboard-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-store"></i>
+                <h2>Inventario PRO</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#inventario" class="active" data-section="inventario">
+                    <i class="fas fa-box"></i> <span>Inventario Maestro</span>
+                </a>
+                <a href="#ventas-principal" data-section="ventas-principal">
+                    <i class="fas fa-cash-register"></i> <span>Registro de Venta</span>
+                </a>
+                <a href="#ventas-diarias" data-section="ventas-diarias">
+                    <i class="fas fa-chart-line"></i> <span>Gráficos de Ventas</span>
+                </a>
+                <a href="#movimientos" data-section="movimientos">
+                    <i class="fas fa-file-invoice-dollar"></i> <span>Informe de Venta</span>
+                </a>
+                <a href="#vendedor-registro" data-section="vendedor-registro">
+                    <i class="fas fa-user-tie"></i> <span>Registro de Vendedor</span>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="main-content">
+            
+            <section id="inventario" class="content-section">
+                <div class="card">
+                    <h2>📦 Inventario Maestro</h2>
+                    <form id="productForm">
+                        <h3>Registro y Edición de Productos</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="codigo">Código (SKU):</label>
+                                <input type="text" id="codigo" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="nombre">Nombre del Producto:</label>
+                                <input type="text" id="nombre" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="cantidad">Stock Inicial:</label>
+                                <input type="number" id="cantidad" required min="0">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="precioCosto">Precio Compra (LPS):</label>
+                                <input type="number" id="precioCosto" required min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="precioVenta">Precio Venta (LPS):</label>
+                                <input type="number" id="precioVenta" required min="0" step="0.01">
+                            </div>
+                            <div class="form-group">
+                                <label for="fechaCaducidad">Fecha de Caducidad:</label>
+                                <input type="date" id="fechaCaducidad">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="proveedor">Proveedor:</label>
+                                <input type="text" id="proveedor">
+                            </div>
+                            
+                            <div class="form-group" style="flex: 2;">
+                                <label for="productImage">🖼️ Imagen del Producto (Opcional):</label>
+                                <input type="file" id="productImage" accept="image/*" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div class="form-group full-width" style="margin-top: 5px; margin-bottom: 20px;">
+                            <div id="imagePreviewContainer">
+                                <img id="imagePreview" src="" alt="Vista previa" class="image-preview hidden">
+                            </div>
+                        </div>
+                        <button type="submit" id="submitBtn" class="btn primary-btn"><i class="fas fa-save"></i> Guardar Producto</button>
+                    </form>
+                </div>
+                
+                <div class="card inventory-list">
+                    <h3>Listado de Productos</h3>
+                    
+                    <div class="form-row" style="margin-bottom: 15px; gap: 10px; justify-content: flex-start;">
+                        <button type="button" class="btn secondary-btn" onclick="printInventory('all')"><i class="fas fa-print"></i> Imprimir TODO</button>
+                        <button type="button" class="btn primary-btn-sale" onclick="printInventory('withStock')"><i class="fas fa-check"></i> Imprimir CON Stock</button>
+                        <button type="button" class="btn delete-btn" onclick="printInventory('withoutStock')"><i class="fas fa-times"></i> Imprimir SIN Stock</button>
+                    </div>
+                    
+                    <input type="text" id="search" class="search-input" placeholder="Buscar producto...">
+                    <div class="table-responsive">
+                        <table class="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th class="image-column">Imagen</th>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Stock</th>
+                                    <th>P. Venta</th>
+                                    <th>P. Compra</th>
+                                    <th>Caducidad</th>
+                                    <th>Proveedor</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventoryList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="ventas-principal" class="content-section hidden">
+                <div class="card sale-register">
+                    <h2>🛒 Carrito de Venta</h2>
+                    
+                    <form id="addToCartForm">
+                        <h3>Agregar Producto</h3>
+                        <div class="form-row">
+                            <div class="form-group" style="flex: 2;">
+                                <label for="cartCode">Código o Nombre del Producto:</label>
+                                
+                                <div class="autocomplete-container">
+                                    <input type="text" id="cartCode" required placeholder="Escanear o buscar producto">
+                                    <div id="autocompleteList" class="autocomplete-list hidden">
+                                        </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="cartQuantity">Cantidad:</label>
+                                <input type="number" id="cartQuantity" required min="1" value="1">
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label for="cartDate">Fecha de Venta:</label>
+                                <input type="date" id="cartDate" required>
+                            </div>
+                        </div>
+                        <div id="cartProductInfo" class="info-panel">Producto no seleccionado.</div>
+                        <button type="submit" class="btn primary-btn-sale"><i class="fas fa-plus"></i> Agregar al Carrito</button>
+                    </form>
+
+                    <div class="card inventory-list" style="margin-top: 20px;">
+                        <h3>Detalle del Carrito</h3>
+                        <div class="table-responsive">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>P. Unitario</th>
+                                        <th>Subtotal</th>
+                                        <th>Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="cartItemsList">
+                                    <tr><td colspan="6" style="text-align: center;">El carrito está vacío. Agregue productos.</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="cartTotalInfo" class="total-panel">Total: LPS 0.00</div>
+                        <button type="button" id="finishSaleBtn" class="btn primary-btn-sale full-width" disabled>
+                            <i class="fas fas fa-money-bill-wave"></i> FINALIZAR VENTA (Finish)
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <section id="sale-confirmation" class="content-section hidden">
+                <div class="card sale-register">
+                    <h2>✅ Confirmación y Vendedor</h2>
+                    <form id="confirmationForm">
+                        <div id="finalSaleDetails" class="total-panel" style="font-size: 1.2em; margin-bottom: 20px;">
+                            Total a registrar: LPS 0.00
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="confirmClient">Cliente:</label>
+                                <input type="text" id="confirmClient" placeholder="Nombre del cliente (Opcional)">
+                            </div>
+                            <div class="form-group">
+                                <label for="confirmSeller">Vendedor que realizó la venta:</label>
+                                <select id="confirmSeller" required>
+                                    <option value="">-- Seleccionar vendedor --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <button id="addNewSellerBtn" type="button" class="btn secondary-btn" style="margin-bottom: 15px;">
+                                ✨ Agregar Nuevo Vendedor
+                            </button>
+                        </div>
+                        <div class="form-row">
+                            <button type="button" id="cancelSaleBtn" class="btn delete-btn" style="flex: 1;">
+                                <i class="fas fa-times"></i> Cancelar Venta
+                            </button>
+                            <button type="submit" class="btn primary-btn-sale" style="flex: 1; margin-left: 10px;">
+                                <i class="fas fa-check"></i> Registrar Venta Final
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section id="ventas-diarias" class="content-section hidden">
+                <div class="card">
+                    <h2>📈 Gráficos de Ventas Diarias</h2>
+                    
+                    <div class="form-row" style="justify-content: flex-end;">
+                        <div class="form-group" style="flex: 0 1 300px;">
+                            <label for="chartFilter">Filtrar por Vendedor:</label>
+                            <select id="chartFilter" class="form-control">
+                                <option value="all">Todos los Vendedores</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <p id="totalSalesSummary" style="margin-top: 15px; font-weight: 600; font-size: 1.1em; color: #1D2B53;">
+                        Resumen: Total de ventas filtradas: LPS 0.00
+                    </p>
+
+                    <hr style="margin: 20px 0; border-top: 1px solid #e0e0e0;">
+
+                    <div class="form-row" style="flex-wrap: wrap;">
+                        
+                        <div class="form-group" style="flex: 1; min-width: 45%;">
+                            <h3>Ventas por Producto (Top 10)</h3>
+                            <div class="chart-container">
+                                <canvas id="salesByProductChart" width="400" height="400"></canvas>
+                                <div id="noProductSales" class="placeholder-chart hidden">
+                                    <i class="fas fa-box-open"></i>
+                                    <p>No hay datos de ventas de productos para mostrar.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="flex: 1; min-width: 45%;">
+                            <h3>Ventas por Vendedor</h3>
+                            <div class="chart-container">
+                                <canvas id="salesBySellerChart" width="400" height="400"></canvas>
+                                <div id="noSellerSales" class="placeholder-chart hidden">
+                                    <i class="fas fa-user-tag"></i>
+                                    <p>No hay datos de ventas por vendedor para mostrar.</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                </div>
+            </section>
+
+            <section id="movimientos" class="content-section hidden">
+                <div class="card">
+                    <h2>🧾 Informe Detallado de Ventas</h2>
+                    
+                    <div class="form-row filter-row" style="align-items: flex-end; flex-wrap: wrap;">
+                        <div class="form-group">
+                            <label for="reportPeriodFilter">Filtrar por Período:</label>
+                            <select id="reportPeriodFilter" class="form-control">
+                                <option value="all">Todo el Historial</option>
+                                <option value="customDate">Día Específico</option>
+                                <option value="customMonth" selected>Mes Específico</option>
+                                <option value="customYear">Año Específico</option>
+                            </select>
+                        </div>
+                        <div class="form-group" id="customDateGroup" style="display: none;">
+                            <label for="reportDateInput">Seleccionar Día:</label>
+                            <input type="date" id="reportDateInput" class="form-control">
+                        </div>
+                        <div class="form-group" id="customMonthGroup">
+                            <label for="reportMonthInput">Seleccionar Mes:</label>
+                            <input type="month" id="reportMonthInput" class="form-control">
+                        </div>
+                        <div class="form-group" id="customYearGroup" style="display: none;">
+                            <label for="reportYearInput">Ingresar Año:</label>
+                            <input type="number" id="reportYearInput" class="form-control" placeholder="Ej: 2025" min="2000">
+                        </div>
+                        <div class="form-group">
+                             <button type="button" id="applyReportFilterBtn" class="btn secondary-btn" style="margin-top: 5px;"><i class="fas fa-filter"></i> Aplicar Filtro</button>
+                        </div>
+                        
+                        <div class="form-group" style="flex: 0 1 200px;">
+                            <label for="reportSellerFilter">Filtrar Vendedor:</label>
+                            <select id="reportSellerFilter" class="form-control">
+                                <option value="all">Todos los Vendedores</option>
+                            </select>
+                        </div>
+                    </div>
+                    <p id="reportSummary" style="margin-top: 15px; font-weight: 600;">Resumen: 0 ventas por un total de LPS 0.00</p>
+                    <div class="card inventory-list" style="margin-top: 20px;">
+                        <h3>Detalle de Transacciones</h3>
+                        <div class="table-responsive">
+                            <table class="inventory-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha/Hora</th>
+                                        <th>Vendedor</th>
+                                        <th>Producto</th>
+                                        <th>Cantidad</th>
+                                        <th>P. Venta (unidad)</th>
+                                        <th>Total Venta</th>
+                                        <th>Cliente</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="salesReportList">
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="noSalesData" class="info-panel" style="text-align: center;">No hay ventas registradas para el filtro seleccionado.</p>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="vendedor-registro" class="content-section hidden">
+                <div class="card">
+                    <h2>🧑‍💼 Registro de Vendedores</h2>
+                    <form id="sellerForm">
+                        <h3>Agregar Nuevo Vendedor</h3>
+                        <div class="form-group">
+                            <label for="newSellerName">Nombre del Nuevo Vendedor:</label>
+                            <input type="text" id="newSellerName" required placeholder="Ej: Juan Pérez">
+                        </div>
+                        <button type="submit" class="btn primary-btn"><i class="fas fa-user-plus"></i> Registrar Vendedor</button>
+                    </form>
+                </div>
+                
+                <div class="card inventory-list">
+                    <h3>Listado de Vendedores Registrados</h3>
+                    <div class="table-responsive">
+                        <table class="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th>Nombre del Vendedor</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sellersList">
+                                <tr><td colspan="2" style="text-align: center;">Cargando vendedores...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
