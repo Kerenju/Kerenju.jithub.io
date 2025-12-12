@@ -939,3 +939,43 @@ function renderDetailedSalesReport() {
 
     reportSummary.innerHTML = `<strong>Resumen:</strong> ${filteredSales.length} ventas por un total de <span class="text-success">LPS ${totalVentas.toFixed(2)}</span>`;
 }
+// En tu archivo JavaScript:
+// (Asumiendo que 'db' ya está inicializada)
+const productosRef = db.collection("productos");
+onSnapshot()
+// La función que se activará con cada cambio
+productosRef.onSnapshot((instantanea) => { 
+    
+    // El código de la suscripción va aquí
+    // ⬇️
+
+    // ... Lo que haces con los datos ...
+    
+}, (error) => {
+    console.error("Hubo un error en la suscripción:", error);
+});
+productosRef.onSnapshot((instantanea) => { 
+    
+    // A. Lista de datos limpios
+    const listaFinalDeProductos = [];
+    
+    // B. Recorrer la lista que te llega de Firebase
+    instantanea.forEach((documento) => {
+        // Guardas los datos del producto (nombre, precio, etc.)
+        listaFinalDeProductos.push({
+            id: documento.id, 
+            ...documento.data()
+        });
+    });
+
+    // C. Muestra la lista nueva en tu página
+    // (Asegúrate de que esta función borre lo viejo y dibuje lo nuevo)
+    mostrarLaListaEnLaWeb(listaFinalDeProductos);
+});
+// Guarda la función que detiene el servicio en una variable
+const dejarDeEscuchar = productosRef.onSnapshot((instantanea) => { 
+    // ... tu código de procesamiento ...
+});
+
+// Cuando ya no la necesites:
+// dejarDeEscuchar();
