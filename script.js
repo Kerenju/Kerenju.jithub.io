@@ -979,3 +979,19 @@ const dejarDeEscuchar = productosRef.onSnapshot((instantanea) => {
 
 // Cuando ya no la necesites:
 // dejarDeEscuchar();
+// Función que se activa con CADA cambio de la base de datos
+function actualizarListado(listaDeProductos) {
+    
+    const contenedor = document.getElementById('contenedor-listado-productos');
+
+    // **PASO CLAVE DE LA SOLUCIÓN:** // Limpia el contenido antes de agregar los nuevos elementos
+    contenedor.innerHTML = ''; 
+    // O si usas jQuery: $('#contenedor-listado-productos').empty();
+
+    // Ahora sí, recorre la lista limpia y agrega cada fila
+    listaDeProductos.forEach(producto => {
+        // Ejemplo: crea la fila de la tabla (<tr>) con los datos del producto
+        const fila = crearFilaHTML(producto); 
+        contenedor.appendChild(fila);
+    });
+}
